@@ -1,0 +1,33 @@
+name: keepalive
+
+# FalkorDB Free instances stop after 1 day of inactivity and are deleted after
+# 7 days. Judging can happen days after the demo was recorded, so this workflow
+# pings the deployed app (which touches FalkorDB and re-seeds if a graph was
+# lost) every 6 hours as a belt-and-braces backup to the Vercel Cron.
+#
+# Set the repo variable UNSPOOL_URL (defaults to the Vercel production URL) and,
+# if you configured CRON_SECRET on Vercel, add the same value as a repo secret.
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch: {}
+
+permissions: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping keep-alive endpoint
+        env:
+          URL: ${{ vars.UNSPOOL_URL || 'https://unspool.vercel.app' }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          set -euo pipefail
+          if [ -n "${CRON_SECRET:-}" ]; then
+            curl -fsS -m 60 -H "Authorization: Bearer ${CRON_SECRET}" "${URL}/api/cron/keepalive"
+          else
+            curl -fsS -m 60 "${URL}/api/cron/keepalive"
+          fi
+          echo

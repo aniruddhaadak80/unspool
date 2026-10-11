@@ -1,0 +1,14 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "crons": [
+    {
+      "path": "/api/cron/keepalive",
+      "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/keepalive",
+      "schedule": "0 21 * * *"
+    }
+  ]
+}

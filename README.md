@@ -188,6 +188,17 @@ Open <http://localhost:3000>, click **re-seed graph** if needed, then ask:
 
 Without an API key the agent runs in **graph-replay mode** — a deterministic pipeline that still executes real Cypher, real PageRank, real memory writes and real action writes (clearly labeled in the UI). Add `OPENROUTER_API_KEY` (or any OpenAI-compatible key via `AGENT_BASE_URL`) to get the full LLM-driven triage → investigator → commander loop.
 
+## Staying live on the free tier
+
+FalkorDB **Free** instances are stopped after 1 day of inactivity and deleted after 7
+(no backups). Unspool defends against a cold graph two ways:
+
+- `/api/cron/keepalive` — touches FalkorDB (that counts as utilization) and **re-seeds
+  any tenant whose graph is empty**, so the demo is never a blank canvas.
+- `vercel.json` runs it twice a day; `.github/workflows/keepalive.yml` pings the
+  deployment every 6 hours as a backup (set repo variable `UNSPOOL_URL` and, if you set
+  `CRON_SECRET` on Vercel, the same value as a repo secret).
+
 ## MCP — tool selection through the protocol
 
 The agent's tools are defined **once** in a neutral registry (`src/lib/agent/registry.ts`) and adapted to both AI SDK and MCP. Any MCP client can drive the same graph tools:
@@ -227,6 +238,7 @@ src/
       runs/route.ts          # GET  — trace + memory panels
       seed/route.ts          # POST — (re)build a tenant's graph
       health/route.ts        # GET  — connection + capability probe
+      cron/keepalive/route.ts# GET  — keep the free instance warm + self-heal
   lib/
     graph/falkordb.ts        # connection + multigraph-per-tenant
     graph/queries.ts         # the Cypher toolkit

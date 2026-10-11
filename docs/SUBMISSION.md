@@ -23,7 +23,8 @@ Deadline: **Oct 18, 2026, 11:59 PM IST**. Register + submit at
 - [ ] Live deploy: `/api/health` shows `falkordb: ok`
 - [ ] Live deploy: ask "Why is checkout failing, and who should I page?" → agent pages on-call, trace replays
 - [ ] Live deploy: tenant switch works (isolated graphs)
-- [ ] FalkorDB instance still running (free tier auto-stops after 1 day inactive — keep it alive through judging; re-seed if needed)
+- [x] **Keep-alive wired** — `/api/cron/keepalive` + Vercel Cron (2×/day) + `.github/workflows/keepalive.yml` (every 6h) touch FalkorDB and auto-re-seed any empty tenant, so the free instance never idles out during judging
+- [ ] Confirm the free instance is up and seeded right before submitting (`GET /api/health` → `falkordb: ok`)
 - [ ] Repo has: README, LICENSE, topics, About description, `.env.example`
 
 ## Side prize: Best blog post (AirPods 5)
