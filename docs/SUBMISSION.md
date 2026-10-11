@@ -9,7 +9,7 @@ Deadline: **Oct 18, 2026, 11:59 PM IST**. Register + submit at
 - [x] **README with setup instructions and graph data model** — `README.md` + `docs/GRAPH-MODEL.md`
 - [x] **The Cypher queries / graph algorithms the product depends on** — README "The Cypher the product depends on" + `docs/GRAPH-MODEL.md`
 - [ ] **Demo video showing the working project** — record following `docs/DEMO-SCRIPT.md` (3 min)
-- [x] **Live deployment** — Vercel (`unspool.vercel.app`) + full local setup in README
+- [x] **Live deployment** — Vercel: <https://unspool-red.vercel.app> + full local setup in README
 - [ ] **The track you are entering** — declare: **all three tracks**
       1. Agents That Act on Connected Data
       2. Agent Memory and Coordination

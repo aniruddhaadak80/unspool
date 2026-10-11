@@ -21,7 +21,7 @@ jobs:
     steps:
       - name: Ping keep-alive endpoint
         env:
-          URL: ${{ vars.UNSPOOL_URL || 'https://unspool.vercel.app' }}
+          URL: ${{ vars.UNSPOOL_URL || 'https://unspool-red.vercel.app' }}
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
           set -euo pipefail

@@ -8,6 +8,8 @@ Built for **Graph Hacks: Context for AI Agents** (WeMakeDevs × FalkorDB, Oct 15
 ![agent](https://img.shields.io/badge/agent-AI_SDK_v7_·_OpenRouter_·_MCP-58a6ff)
 ![ui](https://img.shields.io/badge/ui-React_Flow_·_Tailwind_4-3fb950)
 
+**▶ [Live demo](https://unspool-red.vercel.app)** · [Source](https://github.com/aniruddhaadak80/unspool) · [Graph model](docs/GRAPH-MODEL.md) · [Blog post](docs/BLOG-POST.md)
+
 ---
 
 ## The one-minute pitch

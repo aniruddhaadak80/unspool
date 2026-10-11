@@ -35,7 +35,7 @@ export function getModel() {
     baseURL,
     headers: {
       // OpenRouter asks for these so apps can be identified / ranked.
-      "HTTP-Referer": process.env.APP_URL || "https://unspool.vercel.app",
+      "HTTP-Referer": process.env.APP_URL || "https://unspool-red.vercel.app",
       "X-Title": "Unspool — incident command that shows its work",
     },
   });
