@@ -1,10 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import GraphCanvas from "@/components/graph-canvas";
 import ChatPanel from "@/components/chat-panel";
 import TraceTimeline from "@/components/trace-timeline";
 import MemoryPanel from "@/components/memory-panel";
+import AnalysisPanel from "@/components/analysis-panel";
+import CypherConsole from "@/components/cypher-console";
 import type {
   AgentResult,
   CanvasEdge,
@@ -47,6 +49,7 @@ export default function MissionControl() {
   const [busy, setBusy] = useState(false);
   const [activeRun, setActiveRun] = useState<AgentResult | null>(null);
   const [activeStep, setActiveStep] = useState(-1);
+  const [drawer, setDrawer] = useState<"analysis" | "cypher" | null>(null);
   const replayTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const loadGraph = useCallback(async (t: string, s: string) => {
@@ -223,22 +226,42 @@ export default function MissionControl() {
 
         {/* canvas */}
         <section className="panel workspace-grid relative col-span-6 flex flex-col overflow-hidden">
-          <PanelHead
-            title="Company graph"
-            note={`${nodes.length} nodes · ${edges.length} edges · live from falkordb`}
-          />
-          <div className="min-h-0 flex-1">
-            <GraphCanvas nodes={nodes} edges={edges} seed={seed} highlight={highlight} />
+          <div className="flex shrink-0 items-center justify-between border-b border-border px-3 py-2">
+            <div className="flex items-baseline gap-2">
+              <span className="text-[12.5px] font-semibold">Company graph</span>
+              <span className="micro">
+                {nodes.length} nodes · {edges.length} edges · live from falkordb
+              </span>
+            </div>
+            <div className="flex items-center gap-1">
+              <ToolBtn active={drawer === "analysis"} onClick={() => setDrawer(drawer === "analysis" ? null : "analysis")}>
+                analysis
+              </ToolBtn>
+              <ToolBtn active={drawer === "cypher"} onClick={() => setDrawer(drawer === "cypher" ? null : "cypher")}>
+                cypher console
+              </ToolBtn>
+            </div>
           </div>
-          {activeRun && (
-            <div className="pointer-events-none absolute bottom-3 left-3 max-w-md rounded-md border border-border bg-panel/90 px-3 py-2">
-              <div className="micro" style={{ color: "var(--accent)" }}>
-                replay · step {Math.max(activeStep + 1, 0)}/{activeRun.steps.length}
-                {activeRun.acted ? " · agent acted" : ""}
+          <div className="relative min-h-0 flex-1">
+            <GraphCanvas nodes={nodes} edges={edges} seed={seed} highlight={highlight} />
+            {activeRun && (
+              <div className="pointer-events-none absolute bottom-3 left-3 max-w-md rounded-md border border-border bg-panel/90 px-3 py-2">
+                <div className="micro" style={{ color: "var(--accent)" }}>
+                  replay · step {Math.max(activeStep + 1, 0)}/{activeRun.steps.length}
+                  {activeRun.acted ? " · agent acted" : ""}
+                </div>
+                <div className="mt-0.5 text-[12px] text-muted">
+                  {activeRun.steps[activeStep]?.properties.summary ?? "…"}
+                </div>
               </div>
-              <div className="mt-0.5 text-[12px] text-muted">
-                {activeRun.steps[activeStep]?.properties.summary ?? "…"}
-              </div>
+            )}
+          </div>
+          {drawer && (
+            <div
+              className="h-48 shrink-0 overflow-hidden border-t border-border"
+              style={{ background: "var(--panel-2)" }}
+            >
+              {drawer === "analysis" ? <AnalysisPanel tenant={tenant} /> : <CypherConsole tenant={tenant} />}
             </div>
           )}
         </section>
@@ -279,5 +302,28 @@ function Badge({ dot, label }: { dot: "good" | "warn" | "bad"; label: string }) 
       <span className="h-2 w-2 rounded-full" style={{ background: color }} />
       <span className="micro">{label}</span>
     </span>
+  );
+}
+
+function ToolBtn({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="micro rounded border px-2 py-1 transition-colors"
+      style={{
+        borderColor: active ? "var(--accent)" : "var(--border-strong)",
+        color: active ? "var(--accent)" : "var(--faint)",
+      }}
+    >
+      {children}
+    </button>
   );
 }

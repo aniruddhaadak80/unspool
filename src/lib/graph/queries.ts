@@ -87,6 +87,30 @@ export async function dependentsOf(graph: Graph, serviceName: string, hops = 3) 
   return rows;
 }
 
+/**
+ * Pure builder for a read-only graph-algorithm call. Exported for tests: this
+ * is the one place the agent (and the analysis panel) constructs algorithm
+ * Cypher, so quote/escaping bugs live here and only here.
+ */
+export function buildAlgorithmCall(
+  algo: "pageRank" | "wcc" | "cdlp" | "betweennessCentrality",
+  label?: string,
+  relType?: string,
+): string {
+  const L = label ? `'${label.replace(/'/g, "\\'")}'` : "NULL";
+  const R = relType ? `'${relType.replace(/'/g, "\\'")}'` : "NULL";
+  switch (algo) {
+    case "pageRank":
+      return `CALL algo.pageRank(${L}, ${R}) YIELD node, score RETURN node, score ORDER BY score DESC LIMIT 25`;
+    case "betweennessCentrality":
+      return `CALL algo.betweennessCentrality(${L}, ${R}) YIELD node, score RETURN node, score ORDER BY score DESC LIMIT 25`;
+    case "wcc":
+      return `CALL algo.WCC(${L}, ${R}) YIELD node, setId RETURN node, setId LIMIT 50`;
+    case "cdlp":
+      return `CALL algo.CDLP(${L}, ${R}) YIELD node, community RETURN node, community LIMIT 50`;
+  }
+}
+
 /** Run a FalkorDB graph algorithm as an agent tool. */
 export async function runAlgorithm(
   graph: Graph,
@@ -94,16 +118,7 @@ export async function runAlgorithm(
   label?: string,
   relType?: string,
 ) {
-  const L = label ? `'${label.replace(/'/g, "\\'")}'` : "NULL";
-  const R = relType ? `'${relType.replace(/'/g, "\\'")}'` : "NULL";
-  const call =
-    algo === "pageRank"
-      ? `CALL algo.pageRank(${L}, ${R}) YIELD node, score RETURN node, score ORDER BY score DESC LIMIT 25`
-      : algo === "betweennessCentrality"
-        ? `CALL algo.betweennessCentrality(${L}, ${R}) YIELD node, score RETURN node, score ORDER BY score DESC LIMIT 25`
-        : algo === "wcc"
-          ? `CALL algo.WCC(${L}, ${R}) YIELD node, setId RETURN node, setId LIMIT 50`
-          : `CALL algo.CDLP(${L}, ${R}) YIELD node, community RETURN node, community LIMIT 50`;
+  const call = buildAlgorithmCall(algo, label, relType);
   const { rows } = await runCypher<{ node: unknown; score?: number; setId?: number; community?: number }>(graph, call);
   return { algo, rows };
 }

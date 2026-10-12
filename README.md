@@ -7,6 +7,7 @@ Built for **Graph Hacks: Context for AI Agents** (WeMakeDevs × FalkorDB, Oct 15
 ![stack](https://img.shields.io/badge/stack-Next.js_16_·_React_19_·_TypeScript_·_FalkorDB-ff8101)
 ![agent](https://img.shields.io/badge/agent-AI_SDK_v7_·_OpenRouter_·_MCP-58a6ff)
 ![ui](https://img.shields.io/badge/ui-React_Flow_·_Tailwind_4-3fb950)
+![ci](https://github.com/aniruddhaadak80/unspool/actions/workflows/ci.yml/badge.svg)
 
 **▶ [Live demo](https://unspool-red.vercel.app)** · [Source](https://github.com/aniruddhaadak80/unspool) · [Graph model](docs/GRAPH-MODEL.md) · [Blog post](docs/BLOG-POST.md)
 
@@ -181,12 +182,22 @@ cp .env.example .env.local
 #   → paste your FALKORDB_URL (and optionally OPENROUTER_API_KEY)
 bun run seed        # build the synthetic company graph
 bun run dev         # http://localhost:3000
+bun test            # 24 unit tests: seed integrity, normalizers, Cypher builders
 ```
 
 Open <http://localhost:3000>, click **re-seed graph** if needed, then ask:
 > *"Why is checkout failing, and who should I page?"*
 
-### 3. (Optional) Live LLM mode
+### 3. Explore it like a judge
+
+Two built-in tools sit under the graph canvas:
+
+- **analysis** — runs `algo.pageRank` / `algo.WCC` / `algo.betweennessCentrality` live and
+  shows the structurally critical services, failure islands and bridge services.
+- **cypher console** — run any read-only Cypher (the queries above are one click each).
+  Write clauses (`CREATE`, `MERGE`, `SET`, `DELETE`, …) are rejected server-side.
+
+### 4. (Optional) Live LLM mode
 
 Without an API key the agent runs in **graph-replay mode** — a deterministic pipeline that still executes real Cypher, real PageRank, real memory writes and real action writes (clearly labeled in the UI). Add `OPENROUTER_API_KEY` (or any OpenAI-compatible key via `AGENT_BASE_URL`) to get the full LLM-driven triage → investigator → commander loop.
 
@@ -241,6 +252,8 @@ src/
       seed/route.ts          # POST — (re)build a tenant's graph
       health/route.ts        # GET  — connection + capability probe
       cron/keepalive/route.ts# GET  — keep the free instance warm + self-heal
+      cypher/route.ts        # POST — read-only Cypher console
+      analysis/route.ts      # GET  — pageRank / WCC / betweenness X-ray
   lib/
     graph/falkordb.ts        # connection + multigraph-per-tenant
     graph/queries.ts         # the Cypher toolkit
@@ -254,10 +267,15 @@ src/
     agent/trace.ts           # provenance: runs + steps as graph nodes
     agent/actions.ts         # page / create / resolve (with provenance)
     agent/provider.ts        # OpenRouter / OpenAI-compatible model
-  components/                # canvas, chat, trace timeline, memory panel
+  components/                # canvas, chat, trace, memory, analysis, cypher console
 scripts/
   seed.ts                    # CLI seeder
   mcp-server.ts              # standalone MCP (stdio) server
+tests/                       # bun test — seed integrity, normalizers, Cypher builders
+.github/workflows/
+  ci.yml                     # typecheck + test + build on every push
+  keepalive.yml              # keeps the free FalkorDB instance warm
+vercel.json                  # framework + cron schedule
 docs/
   ARCHITECTURE.md            # deep dive
   GRAPH-MODEL.md             # schema + Cypher cookbook

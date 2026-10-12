@@ -90,6 +90,23 @@ graph.
   a setup hint; the UI shows the badge.
 - **LLM stage fails** → the stage is skipped and the next one proceeds with whatever
   evidence exists; the failure is recorded as a trace step.
+- **Free-tier instance sleeps** → `/api/cron/keepalive` is pinged by Vercel Cron
+  (2×/day) and a GitHub Actions workflow (every 6h): it touches the instance and
+  re-seeds any tenant whose graph came back empty.
+- **Placeholder credentials** → treated as *unconfigured* (not as a crash), so a
+  copied `.env.example` degrades to the 503 path instead of a `500 ENOTFOUND`.
+
+## Explorer surfaces (same engine, no second system)
+
+Beyond the agent loop, the graph is directly explorable — which is also how the
+judges can verify the claims without reading code:
+
+- `POST /api/cypher` — a **read-only** Cypher console. Write clauses and
+  multi-statement scripts are rejected before they reach FalkorDB; rows are
+  sanitized (BigInt ids → strings) and capped. The README's queries are one click.
+- `GET /api/analysis` — runs `pageRank`, `WCC`, `CDLP` and `betweennessCentrality`
+  over `Service/DEPENDS_ON` and returns the structural X-ray (critical services,
+  failure islands, bridges, communities). Each algorithm can fail independently.
 
 ## Performance notes
 

@@ -18,7 +18,8 @@ Deadline: **Oct 18, 2026, 11:59 PM IST**. Register + submit at
 ## Pre-submit verification
 
 - [ ] `bun run typecheck` clean
-- [ ] `bun run build` clean
+- [ ] `bun test` green (24 tests) and `bun run build` clean
+- [ ] CI green on `main` (`.github/workflows/ci.yml`)
 - [ ] `bun run seed` + `bun run start` → full replay works locally
 - [ ] Live deploy: `/api/health` shows `falkordb: ok`
 - [ ] Live deploy: ask "Why is checkout failing, and who should I page?" → agent pages on-call, trace replays
