@@ -25,9 +25,16 @@ jobs:
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
           set -euo pipefail
-          if [ -n "${CRON_SECRET:-}" ]; then
-            curl -fsS -m 60 -H "Authorization: Bearer ${CRON_SECRET}" "${URL}/api/cron/keepalive"
-          else
-            curl -fsS -m 60 "${URL}/api/cron/keepalive"
-          fi
-          echo
+          AUTH=()
+          if [ -n "${CRON_SECRET:-}" ]; then AUTH=(-H "Authorization: Bearer ${CRON_SECRET}"); fi
+          # Capture the body + status without letting curl fail the step first.
+          BODY=$(curl -sS -m 60 -w '\n%{http_code}' "${AUTH[@]}" "${URL}/api/cron/keepalive")
+          CODE=$(printf '%s' "$BODY" | tail -n1)
+          PAYLOAD=$(printf '%s' "$BODY" | sed '$d')
+          echo "HTTP $CODE"
+          echo "$PAYLOAD"
+          case "$CODE" in
+            200) echo "keep-alive ok" ;;
+            503) echo "::notice::FalkorDB is not configured yet — skipping. Set FALKORDB_URL on Vercel." ;;
+            *)   echo "::error::keep-alive failed with HTTP $CODE"; exit 1 ;;
+          esac
