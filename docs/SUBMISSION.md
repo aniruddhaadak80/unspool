@@ -17,13 +17,17 @@ Deadline: **Oct 18, 2026, 11:59 PM IST**. Register + submit at
 
 ## Pre-submit verification
 
-- [ ] `bun run typecheck` clean
-- [ ] `bun test` green (24 tests) and `bun run build` clean
-- [ ] CI green on `main` (`.github/workflows/ci.yml`)
+- [x] `bun run typecheck` clean (runs `next typegen` first)
+- [x] `bun test` green (35 tests) and `bun run build` clean
+- [x] CI green on `main` (`.github/workflows/ci.yml`) — typecheck + test + build
+- [ ] `bun run verify` green against a live graph (seeds a `verify` tenant, runs every
+      query + the full replay agent, asserts the Action → Decision → Evidence chain)
 - [ ] `bun run seed` + `bun run start` → full replay works locally
 - [ ] Live deploy: `/api/health` shows `falkordb: ok`
 - [ ] Live deploy: ask "Why is checkout failing, and who should I page?" → agent pages on-call, trace replays
 - [ ] Live deploy: tenant switch works (isolated graphs)
+- [x] Live deploy: `POST /api/cypher` with `CREATE …` returns 403 (read-only guard)
+- [x] Live deploy: analysis + cypher-console drawer render under the canvas
 - [x] **Keep-alive wired** — `/api/cron/keepalive` + Vercel Cron (2×/day) + `.github/workflows/keepalive.yml` (every 6h) touch FalkorDB and auto-re-seed any empty tenant, so the free instance never idles out during judging
 - [ ] Confirm the free instance is up and seeded right before submitting (`GET /api/health` → `falkordb: ok`)
 - [ ] Repo has: README, LICENSE, topics, About description, `.env.example`

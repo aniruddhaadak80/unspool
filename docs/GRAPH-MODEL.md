@@ -17,8 +17,8 @@ the agent's tools (`src/lib/agent/registry.ts`), and the replay UI.
 | `AgentRun` | `id, agent, prompt, startedAt, answer?, finishedAt?` | one reasoning run |
 | `TraceStep` | `idx, kind, summary, cypher?, detail?, at` | one step in a run |
 | `Action` | `kind, at, reason, severity` | page / create / resolve |
-| `Decision` | `id, at` | provenance chain |
-| `Evidence` | `kind, source, at` | provenance chain |
+| `Decision` | `id, kind, rationale, severity?, at` | provenance chain — what authorized an action |
+| `Evidence` | `ref, kind, at` | a graph fact a decision was BASED_ON |
 | `Cluster` | `name` | deployment cluster |
 | `Tenant` | `id, seededAt` | tenant marker |
 
@@ -97,7 +97,7 @@ RETURN s, t, collect(DISTINCT m) AS members, collect(DISTINCT p) AS oncall
 MATCH (m:Memory)
 WHERE m.kind = 'semantic'
 OPTIONAL MATCH (m)-[:ABOUT]->(a)
-WITH m, collect(a.name) AS aboutNames
+WITH m, collect(coalesce(a.name, a.id)) AS aboutNames
 WHERE 'ledger' IN aboutNames
 RETURN m ORDER BY m.at DESC LIMIT 20
 ```
@@ -110,22 +110,38 @@ CREATE (s:TraceStep {idx:$idx, kind:'query_graph', summary:$summary, cypher:$cyp
 CREATE (r)-[:TOOK_STEP]->(s)
 WITH s
 UNWIND $touches AS name
-MATCH (e {name:name})
+MATCH (e) WHERE e.name = name OR e.id = name
 MERGE (s)-[:TOUCHES]->(e)
 ```
 
 ### 8. Acting with provenance
 
+A page never happens without a recorded decision. The action, the decision that
+authorized it, and the evidence it was based on are all written in one step:
+
 ```cypher
-OPTIONAL MATCH (s:Service {name:$service})<-[:ONCALL_FOR]-(oncall:Person)
-WITH coalesce(oncall.name,'unassigned') AS paged, s
-MERGE (i:Incident {service:$service, status:'open'})
-  ON CREATE SET i.severity=$severity, i.openedAt=timestamp()
-CREATE (a:Action {kind:'page', at:timestamp(), reason:$reason})
+MATCH (s:Service {name:$service})-[:OWNED_BY]->(:Team)-[:HAS_MEMBER]->(p:Person)-[:ONCALL_FOR]->(s)
+MATCH (i:Incident {status:'open'})-[:AFFECTS]->(s)
+CREATE (a:Action {kind:'page', at:timestamp(), reason:$reason, severity:$severity})
+CREATE (d:Decision {id:$decisionId, kind:'page', rationale:$reason, at:timestamp()})
+CREATE (a)-[:AUTHORIZED_BY]->(d)
 CREATE (a)-[:TARGETS]->(i)
+WITH d
+UNWIND $evidence AS ref
+MATCH (e) WHERE e.name = ref OR e.id = ref
+MERGE (ev:Evidence {ref: ref}) ON CREATE SET ev.at = timestamp()
+MERGE (d)-[:BASED_ON]->(ev)
+MERGE (ev)-[:ABOUT]->(e)
 ```
 
-### 9. Reading a full run trace (powers the replay UI)
+### 9. "Why was Priya paged?" — the justification, in one match
+
+```cypher
+MATCH (a:Action {kind:'page'})-[:AUTHORIZED_BY]->(d:Decision)-[:BASED_ON]->(ev:Evidence)-[:ABOUT]->(e)
+RETURN d.rationale AS why, collect(DISTINCT coalesce(e.name, e.id)) AS evidence
+```
+
+### 10. Reading a full run trace (powers the replay UI)
 
 ```cypher
 MATCH (r:AgentRun {id:$runId})-[:TOOK_STEP]->(s:TraceStep)

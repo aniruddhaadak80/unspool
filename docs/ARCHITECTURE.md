@@ -108,6 +108,21 @@ judges can verify the claims without reading code:
   over `Service/DEPENDS_ON` and returns the structural X-ray (critical services,
   failure islands, bridges, communities). Each algorithm can fail independently.
 
+## How this is verified
+
+Two layers, because unit tests can't prove Cypher and a live graph isn't available
+in CI:
+
+- `bun test` — 35 DB-free tests: seed-data integrity (including the
+  `ledger → checkout-api` cascade the story depends on), FalkorDB client
+  normalizers, algorithm-Cypher builders, and the read-only guard.
+- `bun run verify` — a live smoke test. It seeds a throwaway `verify` tenant,
+  runs *every* query the product depends on, runs the full replay agent, and
+  asserts the real `Action → Decision → Evidence → entity` provenance chain
+  exists in the graph. Non-zero exit on any failure, so it is a pre-submission
+  gate. `.github/workflows/live-verify.yml` runs it weekly when a graph is
+  configured.
+
 ## Performance notes
 
 - One FalkorDB connection per warm serverless process (lazy singleton).

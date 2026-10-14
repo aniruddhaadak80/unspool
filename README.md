@@ -86,11 +86,13 @@ erDiagram
     Memory }o--o{ Service : "ABOUT"
     Memory }o--o{ Person : "ABOUT"
     Memory }o--o{ Incident : "ABOUT"
+    Memory }o--o{ Document : "ABOUT"
     AgentRun ||--o{ TraceStep : "TOOK_STEP"
     TraceStep }o--o{ Service : "TOUCHES"
     Action }o--|| Incident : "TARGETS"
-    Decision }o--|| Action : "AUTHORIZED_BY"
+    Action }o--|| Decision : "AUTHORIZED_BY"
     Decision }o--o{ Evidence : "BASED_ON"
+    Evidence }o--|| Service : "ABOUT"
 ```
 
 | Label | Key properties | Meaning |
@@ -104,7 +106,8 @@ erDiagram
 | `AgentRun` | `id, agent, prompt, startedAt, answer` | One reasoning run |
 | `TraceStep` | `idx, kind, summary, cypher, detail` | One step in a run |
 | `Action` | `kind, at, reason, severity` | page / create / resolve |
-| `Decision` / `Evidence` | — | Provenance chain |
+| `Decision` | `id, kind, rationale, at` | The reasoning that authorized an action |
+| `Evidence` | `ref, kind, at` | A graph fact the decision was based on |
 
 ## The Cypher the product depends on
 
@@ -134,7 +137,7 @@ RETURN sp, length(sp) AS len
 MATCH (m:Memory)
 WHERE m.kind = 'semantic'
 OPTIONAL MATCH (m)-[:ABOUT]->(a)
-WITH m, collect(a.name) AS aboutNames
+WITH m, collect(coalesce(a.name, a.id)) AS aboutNames
 WHERE 'ledger' IN aboutNames
 RETURN m ORDER BY m.at DESC LIMIT 20
 ```
@@ -146,18 +149,30 @@ CREATE (s:TraceStep {idx:$idx, kind:'query_graph', summary:$summary, cypher:$cyp
 CREATE (r)-[:TOOK_STEP]->(s)
 WITH s
 UNWIND $touches AS name
-MATCH (e {name:name})
+MATCH (e) WHERE e.name = name OR e.id = name
 MERGE (s)-[:TOUCHES]->(e)
 ```
 
-**Acting with provenance (page the on-call, open the incident):**
+**Acting with provenance (page the on-call, attach to the incident, record the decision):**
 ```cypher
-OPTIONAL MATCH (s:Service {name:$service})<-[:ONCALL_FOR]-(oncall:Person)
-WITH coalesce(oncall.name,'unassigned') AS paged, s
-MERGE (i:Incident {service:$service, status:'open'})
-  ON CREATE SET i.severity=$severity, i.openedAt=timestamp()
-CREATE (a:Action {kind:'page', at:timestamp(), reason:$reason})
+MATCH (s:Service {name:$service})-[:OWNED_BY]->(:Team)-[:HAS_MEMBER]->(p:Person)-[:ONCALL_FOR]->(s)
+MATCH (i:Incident {status:'open'})-[:AFFECTS]->(s)
+CREATE (a:Action {kind:'page', at:timestamp(), reason:$reason, severity:$severity})
+CREATE (d:Decision {id:$decisionId, kind:'page', rationale:$reason, at:timestamp()})
+CREATE (a)-[:AUTHORIZED_BY]->(d)
 CREATE (a)-[:TARGETS]->(i)
+WITH d
+UNWIND $evidence AS ref
+MATCH (e) WHERE e.name = ref OR e.id = ref
+MERGE (ev:Evidence {ref: ref}) ON CREATE SET ev.at = timestamp()
+MERGE (d)-[:BASED_ON]->(ev)
+MERGE (ev)-[:ABOUT]->(e)
+```
+
+**"Why was Priya paged?" — the whole justification in one match:**
+```cypher
+MATCH (a:Action {kind:'page'})-[:AUTHORIZED_BY]->(d:Decision)-[:BASED_ON]->(ev:Evidence)-[:ABOUT]->(e)
+RETURN d.rationale AS why, collect(DISTINCT coalesce(e.name, e.id)) AS evidence
 ```
 
 ## Quickstart
@@ -181,8 +196,9 @@ bun install
 cp .env.example .env.local
 #   → paste your FALKORDB_URL (and optionally OPENROUTER_API_KEY)
 bun run seed        # build the synthetic company graph
+bun run verify      # live smoke test: every query + the action/provenance loop
 bun run dev         # http://localhost:3000
-bun test            # 24 unit tests: seed integrity, normalizers, Cypher builders
+bun test            # 35 unit tests: seed integrity, normalizers, Cypher builders
 ```
 
 Open <http://localhost:3000>, click **re-seed graph** if needed, then ask:
@@ -270,11 +286,13 @@ src/
   components/                # canvas, chat, trace, memory, analysis, cypher console
 scripts/
   seed.ts                    # CLI seeder
+  verify.ts                  # live smoke test: every query + the provenance chain
   mcp-server.ts              # standalone MCP (stdio) server
-tests/                       # bun test — seed integrity, normalizers, Cypher builders
+tests/                       # bun test — seed integrity, normalizers, Cypher builders, read-only guard
 .github/workflows/
   ci.yml                     # typecheck + test + build on every push
   keepalive.yml              # keeps the free FalkorDB instance warm
+  live-verify.yml            # weekly `bun run verify` against the real graph
 vercel.json                  # framework + cron schedule
 docs/
   ARCHITECTURE.md            # deep dive

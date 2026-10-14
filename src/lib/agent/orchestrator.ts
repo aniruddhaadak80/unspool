@@ -245,17 +245,22 @@ async function replayAgent(graph: Graph, runId: string, input: RunInput): Promis
       service: "payments-gateway",
       severity: 1,
       reason: "checkout-api 5xx traced via 3-hop blast radius to payments-gateway; ledger + risk-engine downstream; ledger matches past incident INC-1180.",
+      // The graph facts the page is justified by → (:Evidence) nodes.
+      evidence: ["checkout-api", "payments-gateway", "ledger", "risk-engine", ...downstream.slice(0, 2)],
     });
     acted = true;
     await step("act", `PAGE ${page.paged} for payments-gateway (SEV${page.paged === "unassigned" ? 2 : 1}) → incident ${page.incidentId}`, ["payments-gateway", page.incidentId]);
     answer =
-      `**Paged ${page.paged}** for \`payments-gateway\` (SEV1). Incident **${page.incidentId}** opened and linked in the graph.\n\n` +
+      `**Paged ${page.paged}** for \`payments-gateway\` (SEV1). Incident **${page.incidentId}** is linked in the graph.\n\n` +
       `**Why this page — every step is a node you can replay above:**\n` +
       `1. *Blast radius* — 3 hops from checkout-api converge on payments-gateway as the tier-1 chokepoint (downstream: ${downstream.join(" → ")}).\n` +
       `2. *Semantic memory* — \`cascade-pattern\`: ledger problems cascade to risk-engine → payments-gateway → checkout-api.\n` +
       `3. *Procedural memory* — \`runbook-ledger-rollback\`: re-create the composite index **before** reverting the ledger migration.\n` +
       `4. *PageRank* — structurally critical services: ${top.join(", ")}.\n` +
       `5. *Past incidents* — ledger previously caused ${past.map((p) => (p.properties?.id as string) ?? "").filter(Boolean).join(", ") || "no recorded incidents"}.\n\n` +
+      (page.provenanceRecorded
+        ? `**Provenance:** recorded as \`(:Action {kind:'page'})\` → \`[:AUTHORIZED_BY]\` → \`(:Decision {id:'${page.decisionId}'})\` → \`[:BASED_ON]\` → \`(:Evidence)\`. Ask the graph *"why was ${page.paged} paged?"* and it answers with Cypher.\n\n`
+        : "") +
       `**Memory written:** the page and its justification are stored as episodic memory, so the next session starts warm.`;
   } else {
     answer =

@@ -9,6 +9,7 @@
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "bun test",
+    "verify": "bun run scripts/verify.ts",
     "check": "bun run typecheck && bun test && bun run build",
     "seed": "bun scripts/seed.ts",
     "mcp": "bun scripts/mcp-server.ts"

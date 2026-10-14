@@ -18,7 +18,7 @@ import type {
 const TENANTS = [
   { id: "demo", label: "acme-prod" },
   { id: "acme", label: "acme-staging" },
-  { id: "demo2", label: "globex-prod" },
+  { id: "demo2", label: "acme-sandbox" },
 ];
 
 const SUGGESTIONS = [
@@ -192,7 +192,7 @@ export default function MissionControl() {
               {t.label}
             </button>
           ))}
-          <span className="micro ml-1">isolated graph per tenant</span>
+          <span className="micro ml-1">isolated graph + memory per tenant</span>
         </div>
 
         <div className="ml-auto flex items-center gap-3">

@@ -219,10 +219,19 @@ export function toolDefs(ctx: ToolContext): ToolDef[] {
         service: z.string(),
         reason: z.string().describe("The evidence-backed reason, shown to the responder"),
         severity: z.number().int().min(1).max(4).default(2),
+        evidence: z
+          .array(z.string())
+          .optional()
+          .describe("Entity names/ids from the graph that justify the page — recorded as (:Evidence)"),
       }),
       handler: async (a) => {
-        const { service, reason, severity = 2 } = a as { service: string; reason: string; severity?: number };
-        const r = await actPageOnCall(graph, { service, reason, severity });
+        const { service, reason, severity = 2, evidence } = a as {
+          service: string;
+          reason: string;
+          severity?: number;
+          evidence?: string[];
+        };
+        const r = await actPageOnCall(graph, { service, reason, severity, evidence });
         await step("act", `PAGE on-call for ${service} (SEV${severity})`, [service, r.incidentId], undefined, reason);
         return r;
       },

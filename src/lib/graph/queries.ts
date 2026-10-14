@@ -64,12 +64,12 @@ export async function getServiceOwnership(graph: Graph, serviceName: string) {
 export async function blastRadius(graph: Graph, serviceName: string, hops = 3) {
   const { rows } = await runCypher<{ names: string[]; depth: number }>(
     graph,
-    `MATCH p = (s:Service {name:$serviceName})-[:DEPENDS_ON*1..$hops]->(dep:Service)
+    `MATCH p = (s:Service {name:$serviceName})-[:DEPENDS_ON*1..${limit(hops)}]->(dep:Service)
      RETURN [n IN nodes(p) | n.name] AS names,
             length(p) AS depth
      ORDER BY depth
      LIMIT 100`,
-    { serviceName, hops: limit(hops) },
+    { serviceName },
   );
   return rows;
 }
@@ -78,11 +78,11 @@ export async function blastRadius(graph: Graph, serviceName: string, hops = 3) {
 export async function dependentsOf(graph: Graph, serviceName: string, hops = 3) {
   const { rows } = await runCypher<{ names: string[]; depth: number }>(
     graph,
-    `MATCH p = (dep:Service)-[:DEPENDS_ON*1..$hops]->(s:Service {name:$serviceName})
+    `MATCH p = (dep:Service)-[:DEPENDS_ON*1..${limit(hops)}]->(s:Service {name:$serviceName})
      RETURN [n IN nodes(p) | n.name] AS names, length(p) AS depth
      ORDER BY depth
      LIMIT 100`,
-    { serviceName, hops: limit(hops) },
+    { serviceName },
   );
   return rows;
 }
@@ -184,11 +184,11 @@ export async function subgraphAround(
   const { rows } = await runCypher<{ e: unknown }>(
     graph,
     `MATCH (seed {name:$seedName})
-     MATCH p = (seed)-[*0..$hops]-(n)
+     MATCH p = (seed)-[*0..${limit(hops)}]-(n)
      UNWIND nodes(p) AS node
      RETURN DISTINCT node AS e
      LIMIT $maxNodes`,
-    { seedName, hops: limit(hops), maxNodes: limit(maxNodes) },
+    { seedName, maxNodes: limit(maxNodes) },
   );
   const nodes = rows
     .map((r) => normalizeNode(r.e))
@@ -238,7 +238,7 @@ export async function memories(
     `MATCH (m:Memory)
      WHERE ($kind IS NULL OR m.kind = $kind)
      OPTIONAL MATCH (m)-[:ABOUT]->(a)
-     WITH m, collect(a.name) AS aboutNames
+     WITH m, collect(coalesce(a.name, a.id)) AS aboutNames
      WHERE $aboutName IS NULL OR $aboutName IN aboutNames
      RETURN m AS m ORDER BY m.at DESC LIMIT 50`,
     { kind: kind ?? null, aboutName: aboutName ?? null },

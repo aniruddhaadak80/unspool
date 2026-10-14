@@ -29,9 +29,11 @@ export async function writeMemory(graph: Graph, input: WriteMemoryInput) {
   if (about.length) {
     await runCypher(
       graph,
+      // Match by `name` (services, teams, people, memories) OR `id`
+      // (incidents, documents), so a memory about an incident actually links.
       `MATCH (m:Memory {key:$key, kind:$kind})
-       UNWIND $about AS name
-       MATCH (e {name:name})
+       UNWIND $about AS ref
+       MATCH (e) WHERE e.name = ref OR e.id = ref
        MERGE (m)-[:ABOUT]->(e)
        RETURN count(*) AS linked`,
       { key: input.key, kind: input.kind, about },
@@ -53,7 +55,7 @@ export async function recall(
     `MATCH (m:Memory)
      WHERE ($kind IS NULL OR m.kind = $kind)
      OPTIONAL MATCH (m)-[:ABOUT]->(a)
-     WITH m, collect(a.name) AS aboutNames
+     WITH m, collect(coalesce(a.name, a.id)) AS aboutNames
      WHERE ($about IS NULL OR $about IN aboutNames)
        AND ($query IS NULL OR toLower(m.value) CONTAINS toLower($query)
             OR toLower(m.key) CONTAINS toLower($query))

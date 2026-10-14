@@ -24,6 +24,16 @@ const EXAMPLES = [
     cypher:
       "MATCH (s:Service {name:'risk-engine'}) OPTIONAL MATCH (s)-[:OWNED_BY]->(t:Team) OPTIONAL MATCH (p:Person)-[:ONCALL_FOR]->(s) RETURN s.name AS service, t.name AS team, collect(DISTINCT p.name) AS oncall",
   },
+  {
+    label: "why was someone paged?",
+    cypher:
+      "MATCH (a:Action {kind:'page'})-[:AUTHORIZED_BY]->(d:Decision)-[:BASED_ON]->(ev:Evidence)-[:ABOUT]->(e) RETURN d.rationale AS why, collect(DISTINCT coalesce(e.name, e.id)) AS evidence, count(a) AS pages",
+  },
+  {
+    label: "cross-session memory",
+    cypher:
+      "MATCH (m:Memory) OPTIONAL MATCH (m)-[:ABOUT]->(a) WITH m, collect(coalesce(a.name, a.id)) AS about WHERE 'ledger' IN about OR m.kind = 'procedural' RETURN m.kind AS kind, m.key AS key, m.value AS value ORDER BY m.at DESC LIMIT 10",
+  },
 ];
 
 interface Result {
