@@ -53,4 +53,8 @@ export interface Health {
   detail?: string;
   agent: "live-llm" | "graph-replay";
   model: string;
+  /** Present when the graph is reachable — proves it's real, not just up. */
+  graphs?: string[];
+  graph?: { nodes: number; rels: number; labels: string[] };
+  algorithms?: string[];
 }
