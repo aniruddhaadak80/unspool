@@ -203,6 +203,14 @@ export default function MissionControl() {
                 label={`falkordb ${health.falkordb}`}
               />
               <Badge dot={health.agent === "live-llm" ? "good" : "warn"} label={health.model} />
+              {health.graph && health.graph.nodes > 0 && (
+                <span className="micro text-faint">
+                  {health.graph.nodes} nodes · {health.graph.rels} rels
+                  {health.algorithms && health.algorithms.length > 0
+                    ? ` · ${health.algorithms.length} algo`
+                    : ""}
+                </span>
+              )}
             </>
           )}
           <button

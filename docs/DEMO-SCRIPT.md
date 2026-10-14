@@ -43,7 +43,21 @@ Watch the blast-radius walk and shortest-path highlight. Show the answer's
 
 > "Multi-hop reasoning is one traversal, not a join across five systems."
 
-## 2:10–2:35 — Multi-agent + memory
+## 2:10–2:35 — The graph itself (analysis + Cypher console)
+
+Open the **analysis** drawer under the canvas: PageRank's structurally critical
+services, WCC failure islands, betweenness bridges — computed by FalkorDB's
+`algo.*` engine, live.
+
+Then switch to the **cypher console** and run the "why was someone paged?" chip:
+it returns the `Action → Decision → Evidence` chain — the page, the decision that
+authorized it, and the graph facts it was based on.
+
+> "This isn't a log. The agent wrote its decision into the graph, so 'why did you
+> page Priya?' is one Cypher match. Judges can run the README's queries live —
+> the console is read-only, writes are rejected server-side."
+
+## 2:35–2:50 — Multi-agent + memory
 
 Point at the trace timeline header (triage → investigator → commander stages),
 then the memory panel with episodic/semantic/procedural tabs showing the writes
@@ -53,25 +67,23 @@ that just landed.
 > acts — they share state through the graph, not through memory. And everything
 > they learn persists, so the next session starts warm."
 
-## 2:35–2:50 — Removal test + MCP
+## 2:50–3:00 — Removal test + MCP + close
 
 > "Take FalkorDB out and there is no product: no answers, no memory, no trace.
-> The same tools are exposed over MCP — any MCP client can drive this graph."
+> The same tools are exposed over MCP — any MCP client can drive this graph.
+> Unspool — incident command that shows its work."
 
 Optional 5-second insert: `bun run mcp` starting, tools listing in Claude Desktop.
-
-## 2:50–3:00 — Close
-
-> "Unspool — incident command that shows its work. Built on FalkorDB."
 
 ---
 
 ## Recording checklist
 
-- [ ] Live deploy URL open and healthy (green badges: falkordb · model)
+- [ ] Live deploy URL open and healthy (badges: `falkordb ok` · model · node/rel counts)
 - [ ] Graph seeded (click **re-seed graph** before recording)
 - [ ] Ask question 1, let the full trace replay finish on screen
 - [ ] Ask question 2, show the shortest-path highlight
+- [ ] Open the analysis drawer (algo.* results) and the cypher console (provenance chip)
 - [ ] End on the memory panel with fresh episodic writes visible
 - [ ] Audio: single clear voiceover, no background music
 - [ ] Export 1080p, MP4, < 100MB

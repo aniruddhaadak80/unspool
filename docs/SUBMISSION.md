@@ -42,3 +42,41 @@ demo video exists, then link it in the submission form.
 - [x] Synthetic data only (no private/paywalled/personal data in the graph)
 - [x] AI assistance disclosed (README + blog post)
 - [x] Can explain: graph model, every Cypher query, the 3-stage pipeline, why FalkorDB is load-bearing — rehearse from `docs/ARCHITECTURE.md`
+
+## Copy-paste submission form
+
+**Project name:** Unspool
+
+**Tagline (≤ 100 chars):**
+> Incident command that shows its work — a graph-native agent on FalkorDB.
+
+**Short description:**
+> Unspool is an incident-response agent whose entire reasoning process is graph
+> data. Every Cypher query, graph algorithm, memory recall, decision and action
+> it takes is written back into FalkorDB as nodes and edges, then replayed on a
+> live company graph — hop by hop — so an operator can see exactly why it paged
+> someone. It runs a 3-stage agent pipeline (triage → investigator → commander)
+> over a connected company brain of services, dependencies, teams, on-call
+> rosters, runbooks, ADRs and past incidents, with episodic/semantic/procedural
+> memory stored as graph nodes. PageRank, WCC and betweenness centrality are
+> ordinary agent tools. `POST /api/cypher` lets anyone run the README's queries
+> live; `GET /api/analysis` shows the graph's structural X-ray.
+
+**Tracks (select all three):**
+1. Agents That Act on Connected Data
+2. Agent Memory and Coordination
+3. Company Brain
+
+**Live demo:** https://unspool-red.vercel.app
+**Repo:** https://github.com/aniruddhaadak80/unspool
+**Video:** _(paste the demo-video link)_
+
+**Built with:** Next.js 16 · React 19 · TypeScript (strict) · FalkorDB ·
+`falkordb` Node client · `algo.*` graph algorithms · AI SDK v7 · OpenRouter ·
+React Flow · Tailwind 4 · Bun
+
+**AI disclosure:**
+> Built with heavy AI assistance (an AI coding agent wrote most of the code
+> under my direction). All data in the graph is synthetic and invented. Without
+> an LLM key the app runs a deterministic graph-replay agent that still executes
+> real Cypher, real graph algorithms and real graph writes.
