@@ -205,7 +205,7 @@ export function toolDefs(ctx: ToolContext): ToolDef[] {
       }),
       handler: async (a) => {
         const { kind, key, value, about } = a as { kind: "episodic" | "semantic" | "procedural"; key: string; value: string; about?: string[] };
-        await writeMemory(graph, { kind, key, value, about });
+        await writeMemory(graph, { kind, key, value, about, runId });
         await step("write_memory", `Write ${kind} memory “${key}”`, about ?? []);
         return { ok: true, key };
       },
@@ -231,7 +231,7 @@ export function toolDefs(ctx: ToolContext): ToolDef[] {
           severity?: number;
           evidence?: string[];
         };
-        const r = await actPageOnCall(graph, { service, reason, severity, evidence });
+        const r = await actPageOnCall(graph, { service, reason, severity, evidence, runId });
         await step("act", `PAGE on-call for ${service} (SEV${severity})`, [service, r.incidentId], undefined, reason);
         return r;
       },
@@ -247,7 +247,7 @@ export function toolDefs(ctx: ToolContext): ToolDef[] {
       }),
       handler: async (a) => {
         const { title, severity, services } = a as { title: string; severity: number; services: string[] };
-        const r = await actCreateIncident(graph, { title, severity, services });
+        const r = await actCreateIncident(graph, { title, severity, services, runId });
         await step("act", `Open incident “${title}” (SEV${severity})`, services);
         return r;
       },
@@ -259,7 +259,7 @@ export function toolDefs(ctx: ToolContext): ToolDef[] {
       schema: z.object({ id: z.string(), resolution: z.string() }),
       handler: async (a) => {
         const { id, resolution } = a as { id: string; resolution: string };
-        const r = await actResolveIncident(graph, { id, resolution });
+        const r = await actResolveIncident(graph, { id, resolution, runId });
         await step("act", `Resolve ${id}`, [id], undefined, resolution);
         return r;
       },

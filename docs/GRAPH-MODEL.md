@@ -41,7 +41,7 @@ the agent's tools (`src/lib/agent/registry.ts`), and the replay UI.
 | `AUTHORIZED_BY` | Action → Decision | |
 | `BASED_ON` | Decision → Evidence | |
 | `RUNS_IN` | Service → Cluster | |
-| `MEMBER_OF` | Person → Team | |
+| `WROTE` | AgentRun → Memory | |
 
 ## The queries the product depends on
 

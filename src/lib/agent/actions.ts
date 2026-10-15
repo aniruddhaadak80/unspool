@@ -42,6 +42,8 @@ export async function actPageOnCall(
     severity: number;
     /** Entity names/ids the decision was based on → (:Evidence). */
     evidence?: string[];
+    /** The run this action belongs to → links the memory via [:WROTE]. */
+    runId?: string;
   },
 ): Promise<PageResult> {
   const { service, reason, severity } = input;
@@ -130,6 +132,7 @@ export async function actPageOnCall(
     key: `page:${service}:${Date.now()}`,
     value: `Paged ${paged} for ${service} (SEV${severity}). Reason: ${reason}`,
     about: [service, incidentId],
+    runId: input.runId,
   });
 
   return {
@@ -145,7 +148,7 @@ export async function actPageOnCall(
 
 export async function actCreateIncident(
   graph: Graph,
-  input: { title: string; severity: number; services: string[] },
+  input: { title: string; severity: number; services: string[]; runId?: string },
 ) {
   const id = newIncidentId();
   await runCypher<{ id: string }>(
@@ -163,13 +166,14 @@ export async function actCreateIncident(
     key: `incident:${id}`,
     value: `Opened incident ${id} “${input.title}” (SEV${input.severity}) affecting ${input.services.join(", ")}`,
     about: [...input.services, id],
+    runId: input.runId,
   });
   return { incidentId: id, title: input.title, services: input.services };
 }
 
 export async function actResolveIncident(
   graph: Graph,
-  input: { id: string; resolution: string },
+  input: { id: string; resolution: string; runId?: string },
 ) {
   await runCypher(
     graph,
@@ -183,6 +187,7 @@ export async function actResolveIncident(
     key: `resolve:${input.id}:${Date.now()}`,
     value: `Resolved ${input.id}. Resolution: ${input.resolution}`,
     about: [input.id],
+    runId: input.runId,
   });
   return { incidentId: input.id, status: "resolved" };
 }

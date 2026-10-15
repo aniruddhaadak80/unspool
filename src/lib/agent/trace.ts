@@ -51,7 +51,7 @@ export async function recordStep(graph: Graph, step: TraceStepInput) {
      CREATE (r)-[:TOOK_STEP]->(s)
      WITH s
      UNWIND $touches AS name
-     MATCH (e {name:name})
+     MATCH (e) WHERE e.name = name OR e.id = name
      MERGE (s)-[:TOUCHES]->(e)`,
     {
       runId: step.runId,
@@ -92,7 +92,7 @@ export async function getRunTrace(graph: Graph, runId: string) {
      OPTIONAL MATCH (s)-[:TOUCHES]->(e)
      RETURN r AS run,
             collect(DISTINCT s) AS steps,
-            collect(DISTINCT e.name) AS touched`,
+            collect(DISTINCT coalesce(e.name, e.id)) AS touched`,
     { runId },
   );
   return rows[0] ?? null;

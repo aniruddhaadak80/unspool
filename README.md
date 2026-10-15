@@ -88,6 +88,7 @@ erDiagram
     Memory }o--o{ Incident : "ABOUT"
     Memory }o--o{ Document : "ABOUT"
     AgentRun ||--o{ TraceStep : "TOOK_STEP"
+    AgentRun ||--o{ Memory : "WROTE"
     TraceStep }o--o{ Service : "TOUCHES"
     Action }o--|| Incident : "TARGETS"
     Action }o--|| Decision : "AUTHORIZED_BY"

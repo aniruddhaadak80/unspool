@@ -192,7 +192,7 @@ async function loadSteps(graph: Graph, runId: string) {
     `MATCH (r:AgentRun {id:$runId})-[:TOOK_STEP]->(s:TraceStep)
      OPTIONAL MATCH (s)-[:TOUCHES]->(e)
      WITH s, e ORDER BY s.idx
-     RETURN s AS s, collect(e.name) AS touched`,
+     RETURN s AS s, collect(coalesce(e.name, e.id)) AS touched`,
     { runId },
   );
   return rows.map((r) => ({
@@ -247,6 +247,7 @@ async function replayAgent(graph: Graph, runId: string, input: RunInput): Promis
       reason: "checkout-api 5xx traced via 3-hop blast radius to payments-gateway; ledger + risk-engine downstream; ledger matches past incident INC-1180.",
       // The graph facts the page is justified by → (:Evidence) nodes.
       evidence: ["checkout-api", "payments-gateway", "ledger", "risk-engine", ...downstream.slice(0, 2)],
+      runId,
     });
     acted = true;
     await step("act", `PAGE ${page.paged} for payments-gateway (SEV${page.paged === "unassigned" ? 2 : 1}) → incident ${page.incidentId}`, ["payments-gateway", page.incidentId]);
@@ -277,6 +278,7 @@ async function replayAgent(graph: Graph, runId: string, input: RunInput): Promis
     key: `replay:${runId}`,
     value: `Replay run: ${input.question.slice(0, 140)}`,
     about: ["checkout-api"],
+    runId,
   });
   await step("write_memory", "Persist episodic memory of this run", ["checkout-api"]);
 

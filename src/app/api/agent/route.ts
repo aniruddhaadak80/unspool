@@ -35,7 +35,16 @@ export async function POST(req: NextRequest) {
   if (!question) {
     return NextResponse.json({ error: "Missing `question`." }, { status: 400 });
   }
-  const tenantId = (body.tenantId ?? "demo").trim() || "demo";
+  if (question.length > 600) {
+    return NextResponse.json(
+      { error: "Question too long (max 600 characters)." },
+      { status: 413 },
+    );
+  }
+  // Tenant ids become graph names (`unspool_<tenant>`); keep them to the safe
+  // alphabet and bound the length so a caller can't create an unbounded graph.
+  const tenantId =
+    (body.tenantId ?? "demo").trim().replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 64) || "demo";
 
   try {
     const result = await runAgent({ tenantId, question, focus: body.focus });

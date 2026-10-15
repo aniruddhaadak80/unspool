@@ -111,12 +111,31 @@ await check("findEntities: keyword search", async () => {
 await check("getServiceOwnership: team + roster + on-call", async () => {
   const o = (await getServiceOwnership(graph, "risk-engine")) as {
     team?: { properties?: { name?: string } };
+    members?: Array<{ properties?: { name?: string } } | null>;
     oncall?: unknown[];
   } | null;
   const team = o?.team?.properties?.name;
+  // The roster join is [:OWNED_BY]->(:Team)-[:HAS_MEMBER]->(:Person). If the
+  // seeder and the queries disagree on that edge, `team` still resolves while
+  // `members` silently comes back empty — so assert a real member, not just the
+  // team. (This is exactly how a phantom edge slipped through before.)
+  const members = (o?.members ?? []).filter((m) => Boolean(m?.properties?.name));
   return {
-    ok: Boolean(team) && (o?.oncall?.length ?? 0) > 0,
-    note: `owner=${team ?? "?"} · on-call=${o?.oncall?.length ?? 0}`,
+    ok: Boolean(team) && members.length > 0 && (o?.oncall?.length ?? 0) > 0,
+    note: `owner=${team ?? "?"} · members=${members.map((m) => m?.properties?.name).join(", ") || 0} · on-call=${o?.oncall?.length ?? 0}`,
+  };
+});
+
+await check("on-call chain resolves through HAS_MEMBER (Team → Person)", async () => {
+  const { rows } = await runCypher<{ paged: string }>(
+    graph,
+    `MATCH (s:Service {name:'payments-gateway'})-[:OWNED_BY]->(:Team)-[:HAS_MEMBER]->(p:Person)-[:ONCALL_FOR]->(s)
+     RETURN p.name AS paged LIMIT 1`,
+  );
+  const paged = rows[0]?.paged;
+  return {
+    ok: paged === "Priya Nair",
+    note: paged ? `paged=${paged}` : "no pageable engineer — the membership edge is missing",
   };
 });
 
@@ -204,6 +223,18 @@ await check("incident id is never 'unknown'", () => ({
   ok: !answer.includes("unknown"),
   note: answer.includes("unknown") ? "answer contained 'unknown'" : "real id",
 }));
+
+await check("the page targets a real engineer (never 'unassigned')", () => {
+  const ok = answer.includes("Priya Nair") && !answer.includes("unassigned");
+  return {
+    ok,
+    note: ok
+      ? "paged Priya Nair"
+      : answer.includes("unassigned")
+        ? "answer said 'unassigned' — the ownership/on-call join failed"
+        : "expected 'Priya Nair' in the answer",
+  };
+});
 
 await check("provenance: Action → Decision → Evidence → entity", async () => {
   const { rows: r } = await runCypher<{ decision: string; evidence: string[] }>(

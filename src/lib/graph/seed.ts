@@ -33,7 +33,7 @@ export async function seedGraph(graph: Graph, tenantId: string) {
     for (const m of team.members) {
       await merge(
         `MERGE (p:Person {name:$name}) SET p.role=$role, p.timezone=$tz
-         WITH p MATCH (t:Team {name:$team}) MERGE (p)-[:MEMBER_OF]->(t)`,
+         WITH p MATCH (t:Team {name:$team}) MERGE (t)-[:HAS_MEMBER]->(p)`,
         { name: m.name, role: m.role, tz: m.timezone, team: team.name },
       );
     }

@@ -39,6 +39,20 @@ export async function writeMemory(graph: Graph, input: WriteMemoryInput) {
       { key: input.key, kind: input.kind, about },
     );
   }
+  // Provenance: tie the memory to the run that wrote it, so "which run learned
+  // this?" is one match. Best-effort — a missing run must not lose the memory.
+  if (input.runId) {
+    try {
+      await runCypher(
+        graph,
+        `MATCH (m:Memory {key:$key, kind:$kind}), (r:AgentRun {id:$runId})
+         MERGE (r)-[:WROTE]->(m)`,
+        { key: input.key, kind: input.kind, runId: input.runId },
+      );
+    } catch {
+      /* run node may not exist (e.g. seeded memory) — the memory still stands */
+    }
+  }
   return { ok: true, key: input.key };
 }
 
