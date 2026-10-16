@@ -209,7 +209,7 @@ Open <http://localhost:3000>, click **re-seed graph** if needed, then ask:
 
 Two built-in tools sit under the graph canvas:
 
-- **analysis** — runs `algo.pageRank` / `algo.WCC` / `algo.betweennessCentrality` live and
+- **analysis** — runs `algo.pageRank` / `algo.WCC` / `algo.labelPropagation` / `algo.betweenness` live and
   shows the structurally critical services, failure islands and bridge services.
 - **cypher console** — run any read-only Cypher (the queries above are one click each).
   Write clauses (`CREATE`, `MERGE`, `SET`, `DELETE`, …) are rejected server-side.
@@ -252,7 +252,7 @@ Tools: `find_entities · service_ownership · blast_radius · dependents · run_
 
 | Track | How Unspool answers it |
 |---|---|
-| **01 — Agents That Act on Connected Data** | Multi-hop `DEPENDS_ON` traversal; `algo.pageRank`/`WCC`/`CDLP`/betweenness as agent tools; MCP tool selection; **acts** (pages on-call, opens/resolves incidents) with every action traced to its evidence; explainable results via the replay UI |
+| **01 — Agents That Act on Connected Data** | Multi-hop `DEPENDS_ON` traversal; `algo.pageRank`/`WCC`/`labelPropagation`/`betweenness` as agent tools; MCP tool selection; **acts** (pages on-call, opens/resolves incidents) with every action traced to its evidence; explainable results via the replay UI |
 | **02 — Agent Memory and Coordination** | Episodic/semantic/procedural memory as graph nodes; persistent across sessions; triage→investigator→commander handoffs share state through the graph; per-tenant isolated graphs (FalkorDB multigraph) |
 | **03 — Company Brain** | People, teams, services, runbooks, ADRs, tickets, postmortems and decisions in one graph; "who owns what / who knows what" is a one-hop query; decisions trace back to sources; answers cite `[bracketed]` sources |
 

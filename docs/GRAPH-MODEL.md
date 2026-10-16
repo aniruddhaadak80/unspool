@@ -67,11 +67,21 @@ ORDER BY depth
 CALL algo.pageRank('Service','DEPENDS_ON') YIELD node, score
 RETURN node, score ORDER BY score DESC LIMIT 25;
 
-CALL algo.WCC('Service','DEPENDS_ON') YIELD node, setId RETURN node, setId;
-CALL algo.CDLP('Service','DEPENDS_ON') YIELD node, community RETURN node, community;
-CALL algo.betweennessCentrality('Service','DEPENDS_ON') YIELD node, score
-RETURN node, score ORDER BY score DESC LIMIT 25;
+CALL algo.WCC({nodeLabels:['Service'], relationshipTypes:['DEPENDS_ON']})
+  YIELD node, componentId RETURN node, componentId;
+
+CALL algo.labelPropagation({nodeLabels:['Service'], relationshipTypes:['DEPENDS_ON']})
+  YIELD node, communityId RETURN node, communityId;
+
+CALL algo.betweenness({nodeLabels:['Service'], relationshipTypes:['DEPENDS_ON']})
+  YIELD node, score RETURN node, score ORDER BY score DESC LIMIT 25;
 ```
+
+> Note: `algo.WCC`, `algo.labelPropagation` (the procedure behind CDLP) and
+> `algo.betweenness` take a single **configuration map**, not positional
+> arguments, and their YIELD columns are `componentId` / `communityId`. FalkorDB
+> also does not accept a query parameter in `LIMIT`/`SKIP`, so bounds are
+> literals. `tests/cypher-lint.test.ts` enforces all of this.
 
 ### 4. The "red thread" — shortest reasoning path
 

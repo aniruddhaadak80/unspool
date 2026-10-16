@@ -32,8 +32,8 @@ export async function GET(req: NextRequest) {
         const { rows } = await runCypher<{
           node: unknown;
           score?: number;
-          setId?: number | string;
-          community?: number;
+          componentId?: number | string;
+          communityId?: number | string;
         }>(graph, buildAlgorithmCall(algo, "Service", "DEPENDS_ON"));
         return { ok: true as const, rows };
       } catch (err) {
@@ -55,25 +55,25 @@ export async function GET(req: NextRequest) {
     const ranked = (r: (typeof pagerank.rows)[number]) => ({
       node: normalizeNode(r.node) as GraphNode | null,
       score: typeof r.score === "number" ? Math.round(r.score * 1000) / 1000 : null,
-      cluster: r.setId !== undefined ? String(r.setId) : null,
-      community: r.community ?? null,
+      cluster: r.componentId !== undefined ? String(r.componentId) : null,
+      community: r.communityId ?? null,
     });
 
     const byCluster = new Map<string, { names: string[]; count: number }>();
     for (const r of wcc.rows) {
       const n = normalizeNode(r.node);
-      const key = String(r.setId ?? "?");
+      const key = String(r.componentId ?? "?");
       const entry = byCluster.get(key) ?? { names: [], count: 0 };
       if (n) entry.names.push(n.label);
       entry.count += 1;
       byCluster.set(key, entry);
     }
 
-    const communities = new Map<number, string[]>();
+    const communities = new Map<number | string, string[]>();
     for (const r of cdlp.rows) {
       const n = normalizeNode(r.node);
-      if (!n || r.community === null || r.community === undefined) continue;
-      communities.set(r.community, [...(communities.get(r.community) ?? []), n.label]);
+      if (!n || r.communityId === null || r.communityId === undefined) continue;
+      communities.set(r.communityId, [...(communities.get(r.communityId) ?? []), n.label]);
     }
 
     return NextResponse.json({

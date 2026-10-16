@@ -92,6 +92,23 @@ export async function dependentsOf(graph: Graph, serviceName: string, hops = 3) 
  * is the one place the agent (and the analysis panel) constructs algorithm
  * Cypher, so quote/escaping bugs live here and only here.
  */
+/**
+ * FalkorDB's newer procedures (`algo.WCC`, `algo.labelPropagation`,
+ * `algo.betweenness`) take a single **configuration map** — not positional
+ * arguments — and WCC rejects a map containing any key other than
+ * `nodeLabels`/`relationshipTypes`. Build the map from only the filters we
+ * actually hold. `empty` is what to emit when there are no filters; each
+ * procedure documents a slightly different "run over everything" form, so the
+ * caller picks it (`null` for WCC, no argument for labelPropagation, `{}` for
+ * betweenness). Verified against https://docs.falkordb.com/algorithms/*.
+ */
+function algorithmConfig(label?: string, relType?: string, empty = "{}"): string {
+  const parts: string[] = [];
+  if (label) parts.push(`nodeLabels: ['${label.replace(/'/g, "\\'")}']`);
+  if (relType) parts.push(`relationshipTypes: ['${relType.replace(/'/g, "\\'")}']`);
+  return parts.length ? `{${parts.join(", ")}}` : empty;
+}
+
 export function buildAlgorithmCall(
   algo: "pageRank" | "wcc" | "cdlp" | "betweennessCentrality",
   label?: string,
@@ -101,13 +118,17 @@ export function buildAlgorithmCall(
   const R = relType ? `'${relType.replace(/'/g, "\\'")}'` : "NULL";
   switch (algo) {
     case "pageRank":
+      // algo.pageRank(label, relationship-type) — positional args, YIELD node, score.
       return `CALL algo.pageRank(${L}, ${R}) YIELD node, score RETURN node, score ORDER BY score DESC LIMIT 25`;
     case "betweennessCentrality":
-      return `CALL algo.betweennessCentrality(${L}, ${R}) YIELD node, score RETURN node, score ORDER BY score DESC LIMIT 25`;
+      // Registered as algo.betweenness; config map ({nodeLabels,relationshipTypes}).
+      return `CALL algo.betweenness(${algorithmConfig(label, relType)}) YIELD node, score RETURN node, score ORDER BY score DESC LIMIT 25`;
     case "wcc":
-      return `CALL algo.WCC(${L}, ${R}) YIELD node, setId RETURN node, setId LIMIT 50`;
+      // Registered as algo.WCC; config map or null. YIELD column is componentId.
+      return `CALL algo.WCC(${algorithmConfig(label, relType, "null")}) YIELD node, componentId RETURN node, componentId ORDER BY componentId LIMIT 50`;
     case "cdlp":
-      return `CALL algo.CDLP(${L}, ${R}) YIELD node, community RETURN node, community LIMIT 50`;
+      // CDLP is registered as algo.labelPropagation; YIELD column is communityId.
+      return `CALL algo.labelPropagation(${algorithmConfig(label, relType, "")}) YIELD node, communityId RETURN node, communityId ORDER BY communityId LIMIT 50`;
   }
 }
 
@@ -119,8 +140,13 @@ export async function runAlgorithm(
   relType?: string,
 ) {
   const call = buildAlgorithmCall(algo, label, relType);
-  const { rows } = await runCypher<{ node: unknown; score?: number; setId?: number; community?: number }>(graph, call);
-  return { algo, rows };
+  const { rows } = await runCypher<{
+    node: unknown;
+    score?: number;
+    componentId?: number | string;
+    communityId?: number | string;
+  }>(graph, call);
+  return { algo, call, rows };
 }
 
 /** The literal reasoning path between two entities — the "red thread". */
@@ -187,8 +213,8 @@ export async function subgraphAround(
      MATCH p = (seed)-[*0..${limit(hops)}]-(n)
      UNWIND nodes(p) AS node
      RETURN DISTINCT node AS e
-     LIMIT $maxNodes`,
-    { seedName, maxNodes: limit(maxNodes) },
+     LIMIT ${limit(maxNodes)}`,
+    { seedName },
   );
   const nodes = rows
     .map((r) => normalizeNode(r.e))
@@ -218,8 +244,7 @@ export async function recentRuns(graph: Graph, limitN = 12) {
     `MATCH (r:AgentRun)
      OPTIONAL MATCH (r)-[:TOOK_STEP]->(s:TraceStep)
      RETURN r AS run, count(s) AS stepCount
-     ORDER BY r.startedAt DESC LIMIT $limitN`,
-    { limitN: limit(limitN) },
+     ORDER BY r.startedAt DESC LIMIT ${limit(limitN)}`,
   );
   return rows.map((r) => ({
     run: normalizeNode(r.run),

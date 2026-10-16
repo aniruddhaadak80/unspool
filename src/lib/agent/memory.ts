@@ -64,6 +64,9 @@ export async function recall(
   graph: Graph,
   opts: { kind?: MemoryKind; about?: string; query?: string; limit?: number },
 ) {
+  // FalkorDB does not accept a query parameter in LIMIT/SKIP, so clamp and
+  // interpolate the bound (it is a number, never user text — injection-safe).
+  const take = Math.max(1, Math.min(100, Math.floor(opts.limit ?? 20)));
   const { rows } = await runCypher<{ m: unknown }>(
     graph,
     `MATCH (m:Memory)
@@ -73,12 +76,11 @@ export async function recall(
      WHERE ($about IS NULL OR $about IN aboutNames)
        AND ($query IS NULL OR toLower(m.value) CONTAINS toLower($query)
             OR toLower(m.key) CONTAINS toLower($query))
-     RETURN m AS m ORDER BY m.at DESC LIMIT $limit`,
+     RETURN m AS m ORDER BY m.at DESC LIMIT ${take}`,
     {
       kind: opts.kind ?? null,
       about: opts.about ?? null,
       query: opts.query ?? null,
-      limit: Math.max(1, Math.min(100, opts.limit ?? 20)),
     },
   );
   return rows.map((r) => r.m);

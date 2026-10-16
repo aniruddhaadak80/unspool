@@ -63,9 +63,9 @@ evidence the commander reasons over. The UI renders the same chain.
   tenant (`demo`, `acme`, `globex`) gets `unspool_<tenant>` with its own memory and
   state. No per-tenant deployments. This is the Track-02 "separate memory per
   user or tenant" requirement, satisfied by the database's core topology.
-- **Cypher with graph algorithms** — `algo.pageRank`, `algo.WCC`, `algo.CDLP`,
-  `algo.betweennessCentrality` run in the same engine as the traversals, so the
-  agent can call them as tools without a second system.
+- **Cypher with graph algorithms** — `algo.pageRank`, `algo.WCC`,
+  `algo.labelPropagation` (CDLP) and `algo.betweenness` run in the same engine as
+  the traversals, so the agent can call them as tools without a second system.
 - **Traversals fast enough for the agent loop** — sparse-matrix (GraphBLAS) storage
   keeps multi-hop `DEPENDS_ON*1..3` walks in single-digit milliseconds, so the agent
   can afford to walk the graph on every step.

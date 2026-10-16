@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { Graph } from "falkordb";
 import {
   blastRadius,
+  buildAlgorithmCall,
   dependentsOf,
   documentsFor,
   findEntities,
@@ -128,17 +129,19 @@ export function toolDefs(ctx: ToolContext): ToolDef[] {
       }),
       handler: async (a) => {
         const { algo, label, relType } = a as { algo: "pageRank" | "wcc" | "cdlp" | "betweennessCentrality"; label?: string; relType?: string };
-        const r = await runAlgorithm(graph, algo, label ?? "Service", relType ?? "DEPENDS_ON");
+        const useLabel = label ?? "Service";
+        const useRel = relType ?? "DEPENDS_ON";
+        const r = await runAlgorithm(graph, algo, useLabel, useRel);
         await step(
           "algorithm",
-          `Run ${algo} over Service/DEPENDS_ON`,
+          `Run ${algo} over ${useLabel}/${useRel}`,
           [],
-          `CALL algo.${algo}('Service','DEPENDS_ON') YIELD node …`,
+          r.call,
           "Computed by FalkorDB's matrix engine — not by the LLM.",
         );
         return r.rows.slice(0, 15).map((row) => ({
           name: (row.node as { properties?: { name?: string } })?.properties?.name ?? "?",
-          score: row.score ?? row.setId ?? row.community ?? null,
+          score: row.score ?? row.componentId ?? row.communityId ?? null,
         }));
       },
     },
