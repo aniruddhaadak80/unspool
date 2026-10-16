@@ -1,0 +1,15 @@
+# CODEOWNERS — unspool
+*                                           @aniruddhaadak80
+
+# Core app
+src/                                        @aniruddhaadak80
+
+# Scheduled live-verify (FalkorDB) — gracefully skipped when no DB URL
+.github/workflows/live-verify.yml           @aniruddhaadak80
+.github/workflows/keepalive.yml             @aniruddhaadak80
+
+# CI / workflows
+.github/workflows/                          @aniruddhaadak80
+
+# Docs
+README.md                                   @aniruddhaadak80
