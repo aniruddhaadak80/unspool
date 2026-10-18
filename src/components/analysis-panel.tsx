@@ -26,6 +26,18 @@ interface AnalysisResult {
   };
 }
 
+/**
+ * A response carries the tenant it belongs to, so a response for a tenant that
+ * is no longer being rendered is simply not "current" — which lets the loading
+ * state be derived during render. No `setLoading`/`setError` reset inside the
+ * effect: that synchronous reset is what `react-hooks/set-state-in-effect`
+ * flags, and it causes the cascading render the rule exists to prevent.
+ * https://react.dev/learn/you-might-not-need-an-effect
+ */
+type TenantResult =
+  | { tenant: string; ok: true; data: AnalysisResult }
+  | { tenant: string; ok: false; error: string };
+
 function Bar({ score }: { score: number | null }) {
   if (score === null) return null;
   const width = Math.min(100, Math.max(4, Math.round(score * 10000) / 20));
@@ -37,35 +49,38 @@ function Bar({ score }: { score: number | null }) {
 }
 
 export default function AnalysisPanel({ tenant }: { tenant: string }) {
-  const [data, setData] = useState<AnalysisResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [result, setResult] = useState<TenantResult | null>(null);
 
   useEffect(() => {
     let alive = true;
-    setLoading(true);
-    setError(null);
     fetch(`/api/analysis?tenant=${encodeURIComponent(tenant)}`)
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`))))
-      .then((d) => {
-        if (alive) setData(d);
+      .then((data: AnalysisResult) => {
+        if (alive) setResult({ tenant, ok: true, data });
       })
-      .catch((e) => alive && setError(String(e.message ?? e)))
-      .finally(() => alive && setLoading(false));
+      .catch((e) => {
+        if (alive) setResult({ tenant, ok: false, error: String(e.message ?? e) });
+      });
     return () => {
       alive = false;
     };
   }, [tenant]);
 
-  if (loading) return <div className="micro p-3 text-faint">running algorithms…</div>;
-  if (error || !data)
+  // Only a response for the tenant being rendered counts; a tenant switch
+  // falls back to "running" without any state reset.
+  const current = result?.tenant === tenant ? result : null;
+
+  if (!current) return <div className="micro p-3 text-faint">running algorithms…</div>;
+  if (!current.ok)
     return (
       <div className="micro p-3 text-faint">
-        {error === "HTTP 503"
+        {current.error === "HTTP 503"
           ? "graph offline — analysis needs a live FalkorDB connection."
-          : `analysis unavailable (${error ?? "no data"})`}
+          : `analysis unavailable (${current.error})`}
       </div>
     );
+
+  const data = current.data;
 
   const pr = data.algorithms?.pageRank;
   const wcc = data.algorithms?.wcc;
