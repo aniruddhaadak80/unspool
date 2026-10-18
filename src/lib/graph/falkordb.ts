@@ -68,9 +68,33 @@ export function getDb(): Promise<FalkorDB> {
  * Multigraph topology: every tenant (here: a demo org / an operator) gets its
  * own isolated graph in the same FalkorDB instance — no separate deployments.
  */
+export const DEFAULT_TENANT = "demo";
+
+/**
+ * Normalize untrusted input into a tenant id. Tenant ids become graph names
+ * (`unspool_<tenant>`), so the rule lives here, once, for every surface that
+ * accepts one (query string, header, request body, CLI arg, env):
+ *
+ *  - keep only `[a-zA-Z0-9_-]`,
+ *  - cap the length — an unbounded id would mint unbounded graph names,
+ *  - fall back to the demo tenant when nothing survives, so `?tenant=` cannot
+ *    reach a nameless `unspool_` graph.
+ *
+ * `/api/agent` used to apply this inline while the other routes passed raw
+ * input to `graphNameFor`, which escaped instead of stripping — so the same
+ * `?tenant=a b` reached `unspool_ab` on one endpoint and `unspool_a_b` on
+ * another. One rule, one place.
+ */
+export function normalizeTenantId(raw: string | null | undefined): string {
+  const safe = (raw ?? "")
+    .trim()
+    .replace(/[^a-zA-Z0-9_-]/g, "")
+    .slice(0, 64);
+  return safe || DEFAULT_TENANT;
+}
+
 export function graphNameFor(tenantId: string): string {
-  const safe = tenantId.replace(/[^a-zA-Z0-9_-]/g, "_");
-  return `unspool_${safe}`;
+  return `unspool_${normalizeTenantId(tenantId)}`;
 }
 
 export async function selectGraph(tenantId: string): Promise<Graph> {

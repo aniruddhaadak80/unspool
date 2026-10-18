@@ -13,14 +13,14 @@
  * so external-agent reasoning shows up in the same replay UI.
  */
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { selectGraph } from "../src/lib/graph/falkordb";
+import { graphNameFor, normalizeTenantId, selectGraph } from "../src/lib/graph/falkordb";
 import { buildMcpServer } from "../src/lib/agent/mcp";
 
-const tenant = process.env.UNSPOOL_TENANT ?? "demo";
+const tenant = normalizeTenantId(process.env.UNSPOOL_TENANT);
 const graph = await selectGraph(tenant);
 const runId = `mcp_${Date.now().toString(36)}`;
 const server = buildMcpServer(graph, runId);
 
 const transport = new StdioServerTransport();
 await server.connect(transport);
-console.error(`[unspool-mcp] connected (tenant=${tenant}, graph=unspool_${tenant})`);
+console.error(`[unspool-mcp] connected (tenant=${tenant}, graph=${graphNameFor(tenant)})`);

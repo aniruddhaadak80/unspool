@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { runAgent } from "@/lib/agent/orchestrator";
-import { isFalkorConfigured, selectGraph } from "@/lib/graph/falkordb";
+import { isFalkorConfigured, normalizeTenantId, selectGraph } from "@/lib/graph/falkordb";
 import { graphStats } from "@/lib/graph/seed";
 
 export const maxDuration = 60;
@@ -41,10 +41,10 @@ export async function POST(req: NextRequest) {
       { status: 413 },
     );
   }
-  // Tenant ids become graph names (`unspool_<tenant>`); keep them to the safe
-  // alphabet and bound the length so a caller can't create an unbounded graph.
-  const tenantId =
-    (body.tenantId ?? "demo").trim().replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 64) || "demo";
+  // Tenant ids become graph names (`unspool_<tenant>`); the shared normalizer
+  // keeps them to the safe alphabet and bounds the length so a caller can't
+  // create an unbounded graph.
+  const tenantId = normalizeTenantId(body.tenantId);
 
   try {
     const result = await runAgent({ tenantId, question, focus: body.focus });

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { isFalkorConfigured, runCypher, selectGraph } from "@/lib/graph/falkordb";
+import { isFalkorConfigured, normalizeTenantId, runCypher, selectGraph } from "@/lib/graph/falkordb";
 import { normalizeNode, type GraphNode } from "@/lib/graph/schema";
 import { buildAlgorithmCall } from "@/lib/graph/queries";
 import { graphStats } from "@/lib/graph/seed";
@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
       { status: 503 },
     );
   }
-  const tenant = req.nextUrl.searchParams.get("tenant") ?? "demo";
+  const tenant = normalizeTenantId(req.nextUrl.searchParams.get("tenant"));
 
   try {
     const graph = await selectGraph(tenant);
