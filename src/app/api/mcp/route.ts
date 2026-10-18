@@ -20,9 +20,13 @@ import { buildMcpServer } from "@/lib/agent/mcp";
  *  - The body is materialised before teardown so closing can't truncate it.
  *
  * `?tenant=…` (or `X-Tenant-Id`) picks the isolated graph; default is `demo`.
+ *
+ * No `runtime`/`dynamic` segment exports: this project enables
+ * `nextConfig.cacheComponents`, and Next 16 rejects both there with
+ * "not compatible with nextConfig.cacheComponents". The default nodejs
+ * runtime is what this handler wants anyway, and every request reads live
+ * state, so there is nothing to statically cache.
  */
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
 function rpcError(status: number, code: number, message: string) {
