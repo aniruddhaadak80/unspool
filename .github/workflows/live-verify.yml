@@ -12,20 +12,28 @@ permissions:
 
 jobs:
   verify:
-    # Skip silently until a graph is configured for CI (repo secret FALKORDB_URL).
-    if: ${{ secrets.FALKORDB_URL != '' }}
     runs-on: ubuntu-latest
+    # The secrets context is not available in a job-level `if` — using it there
+    # made this workflow file invalid, so every trigger failed in 0s with
+    # "This run likely failed because of a workflow file issue" and the weekly
+    # proof never ran. `env` does allow secrets, so export it once here and gate
+    # each step on it: with no FALKORDB_URL configured the job succeeds without
+    # doing any work (the keepalive workflow tolerates the unset case the same
+    # way).
+    env:
+      FALKORDB_URL: ${{ secrets.FALKORDB_URL }}
     steps:
       - uses: actions/checkout@v4
 
       - uses: oven-sh/setup-bun@v2
+        if: env.FALKORDB_URL != ''
         with:
           bun-version: 1.3.14
 
       - name: Install
+        if: env.FALKORDB_URL != ''
         run: bun install --frozen-lockfile
 
       - name: Verify against live FalkorDB
-        env:
-          FALKORDB_URL: ${{ secrets.FALKORDB_URL }}
+        if: env.FALKORDB_URL != ''
         run: bun run verify
