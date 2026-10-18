@@ -23,7 +23,7 @@ jobs:
     env:
       FALKORDB_URL: ${{ secrets.FALKORDB_URL }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: oven-sh/setup-bun@v2
         if: env.FALKORDB_URL != ''
