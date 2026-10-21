@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { isFalkorConfigured, selectGraph } from "@/lib/graph/falkordb";
+import { isFalkorConfigured, normalizeTenantId, selectGraph } from "@/lib/graph/falkordb";
 import { graphStats, seedGraph } from "@/lib/graph/seed";
 
 
@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
   if (!isFalkorConfigured()) {
     return NextResponse.json({ error: "FalkorDB not configured." }, { status: 503 });
   }
-  const tenant = req.nextUrl.searchParams.get("tenant") ?? "demo";
+  const tenant = normalizeTenantId(req.nextUrl.searchParams.get("tenant"));
   try {
     const graph = await selectGraph(tenant);
     const seeded = await seedGraph(graph, tenant);
@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
   if (!isFalkorConfigured()) {
     return NextResponse.json({ error: "FalkorDB not configured." }, { status: 503 });
   }
-  const tenant = req.nextUrl.searchParams.get("tenant") ?? "demo";
+  const tenant = normalizeTenantId(req.nextUrl.searchParams.get("tenant"));
   try {
     const graph = await selectGraph(tenant);
     const stats = await graphStats(graph);

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { isFalkorConfigured, selectGraph } from "@/lib/graph/falkordb";
+import { isFalkorConfigured, normalizeTenantId, selectGraph } from "@/lib/graph/falkordb";
 import { graphStats, seedGraph } from "@/lib/graph/seed";
 
 export const maxDuration = 60;
@@ -23,7 +23,8 @@ export const maxDuration = 60;
 const TENANTS = (process.env.KEEPALIVE_TENANTS ?? "demo,acme,acme-staging")
   .split(",")
   .map((t) => t.trim())
-  .filter(Boolean);
+  .filter(Boolean)
+  .map((t) => normalizeTenantId(t));
 
 export async function GET(req: NextRequest) {
   const secret = process.env.CRON_SECRET;

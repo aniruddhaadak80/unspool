@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { isFalkorConfigured, runCypher, selectGraph } from "@/lib/graph/falkordb";
+import { isFalkorConfigured, normalizeTenantId, runCypher, selectGraph } from "@/lib/graph/falkordb";
 import { isReadOnlyCypher, isSingleStatement, toExecutable } from "@/lib/graph/readonly";
 
 export const maxDuration = 30;
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
   }
   const raw = (body.cypher ?? "").trim();
   if (!raw) return NextResponse.json({ error: "Missing `cypher`." }, { status: 400 });
-  const tenantId = (body.tenantId ?? "demo").trim() || "demo";
+  const tenantId = normalizeTenantId(body.tenantId);
 
   if (!isSingleStatement(raw)) {
     return NextResponse.json(
