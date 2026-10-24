@@ -1,31 +1,34 @@
-# Dependabot — unspool
+# Dependabot policy
+#
+# Why this file looks the way it does:
+#   - Grouped minor/patch updates -> one reviewable PR instead of a flood.
+#   - Major bumps of toolchain packages are ignored. They cannot resolve
+#     against this repo's peer dependencies and previously produced PRs that
+#     failed CI in ~6s and sat open forever.
+#   - Dependabot SECURITY updates are unaffected by `ignore` and still open.
+#
+# To take a major upgrade deliberately, bump it by hand or temporarily
+# remove the matching ignore rule.
+
 version: 2
 updates:
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 5
-    groups:
-      github-actions:
-        patterns:
-          - "actions/*"
-          - "oven-sh/*"
-
-  - package-ecosystem: "bun"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 10
-    groups:
-      bun-deps:
-        patterns:
-          - "*"
-        # Minor and patch only. The all-in-one group bundled typescript 5→7,
-        # eslint 9→10 and @types/node 20→26 into a single PR whose CI cannot
-        # pass, which turns the dependabot queue red and strands the safe
-        # updates inside it. Major bumps now arrive as their own PRs, where the
-        # breakage is isolated and reviewable one at a time.
-        update-types:
-          - "minor"
-          - "patch"
+- package-ecosystem: github-actions
+  directory: /
+  schedule:
+    interval: weekly
+  open-pull-requests-limit: 5
+  groups:
+    actions-minor-patch:
+      update-types:
+      - minor
+      - patch
+- package-ecosystem: bun
+  directory: /
+  schedule:
+    interval: weekly
+  open-pull-requests-limit: 5
+  groups:
+    bun-minor-patch:
+      update-types:
+      - minor
+      - patch
