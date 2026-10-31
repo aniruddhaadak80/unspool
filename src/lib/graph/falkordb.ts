@@ -1,4 +1,4 @@
-import { FalkorDB, type Graph } from "falkordb";
+import { FalkorDB, type Graph, type QueryStatistics } from "falkordb";
 
 /**
  * A single, lazily-established FalkorDB connection shared across the serverless
@@ -112,20 +112,20 @@ export async function runCypher<T = Record<string, unknown>>(
     params: params as Record<string, string | number | boolean | null>,
   });
   const rows = (res.data ?? []) as unknown as T[];
-  const stats = extractStats(res.metadata ?? []);
+  const stats = extractStats(res.stats);
   return { rows, stats, raw: res };
 }
 
 /**
- * FalkorDB reports stats like "Nodes created: 3" as an array of strings in the
- * result metadata. Parse them into a record so the trace UI can surface them.
+ * FalkorDB 7 returns parsed query statistics on the reply. Keep only the
+ * non-zero numeric counters and humanise the keys for the trace UI.
  */
-function extractStats(metadata: unknown[]): Record<string, number> {
+function extractStats(replyStats: QueryStatistics | undefined): Record<string, number> {
   const stats: Record<string, number> = {};
-  for (const entry of metadata) {
-    if (typeof entry !== "string") continue;
-    const m = entry.match(/^(.*?):\s*(-?\d+(?:\.\d+)?)$/);
-    if (m) stats[m[1].trim().toLowerCase()] = Number(m[2]);
+  if (!replyStats) return stats;
+  for (const [key, value] of Object.entries(replyStats)) {
+    if (typeof value !== "number" || value === 0) continue;
+    stats[key.replace(/([A-Z])/g, " $1").toLowerCase()] = value;
   }
   return stats;
 }

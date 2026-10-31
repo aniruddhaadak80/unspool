@@ -10,7 +10,7 @@
         "@modelcontextprotocol/sdk": "^1.32.2",
         "@xyflow/react": "^12.12.0",
         "ai": "^7.0.154",
-        "falkordb": "^6.9.2",
+        "falkordb": "^7.0.0",
         "next": "16.4.3",
         "react": "19.3.1",
         "react-dom": "19.3.1",
@@ -580,7 +580,7 @@
 
     "express-rate-limit": ["express-rate-limit@8.7.1", "", { "dependencies": { "debug": "^4.4.3", "ip-address": "^10.2.0" }, "peerDependencies": { "express": ">= 4.11" } }, "sha512-2FXbqkygil3mZiXzEtM0IjE/UBmBNot0J1GEVrJT4JbrvwOSoEtqtO+wHbiMQELWe1eNvHoYRg2dkjOid+6JkA=="],
 
-    "falkordb": ["falkordb@6.9.2", "", { "dependencies": { "@js-temporal/polyfill": "^0.5.1", "@redis/client": "^6.2.1", "cluster-key-slot": "1.1.2", "generic-pool": "^3.9.0", "lodash": "^4.17.21", "redis": "^6.2.0" } }, "sha512-83WGN6KX85Ga/KmHyTyQmjZCda0GXvRI19Ah0PFhNy8wHbiCpOVDsV3K3rOgLmiP7/3n1bCdkYBnViJPvhgKdw=="],
+    "falkordb": ["falkordb@7.0.0", "", { "dependencies": { "@js-temporal/polyfill": "^0.5.1", "@redis/client": "^6.2.1", "cluster-key-slot": "1.1.2", "generic-pool": "^3.9.0", "lodash": "^4.17.21", "redis": "^6.2.0" } }, "sha512-kEdSSHDjMThtm1m+eVFg0/TMEAVdTaC1eh6E/MaX2euRAqelEU2J65ylw9TI9S1KzUc4VEAntb6R3M9Cwxu4SA=="],
 
     "fast-deep-equal": ["fast-deep-equal@3.1.3", "", {}, "sha512-f3qQ9oQy9j2AhBe/H9VC91wLmKBCCU/gDOnKNAYG5hswO7BLKj09Hc5HYNz9cGI++xlpDCIgDaitVs03ATR84Q=="],
 
