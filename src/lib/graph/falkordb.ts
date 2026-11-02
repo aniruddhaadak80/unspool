@@ -124,8 +124,9 @@ function extractStats(replyStats: QueryStatistics | undefined): Record<string, n
   const stats: Record<string, number> = {};
   if (!replyStats) return stats;
   for (const [key, value] of Object.entries(replyStats)) {
-    if (typeof value !== "number" || value === 0) continue;
-    stats[key.replace(/([A-Z])/g, " $1").toLowerCase()] = value;
+    const numeric = typeof value === "boolean" ? Number(value) : value;
+    if (typeof numeric !== "number" || numeric === 0) continue;
+    stats[key.replace(/([A-Z])/g, " $1").toLowerCase()] = numeric;
   }
   return stats;
 }

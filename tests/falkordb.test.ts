@@ -172,15 +172,36 @@ function fakeGraph(respond: () => unknown) {
   } as unknown as Graph;
 }
 
+/** A minimal `QueryStatistics` reply with every counter defaulted to zero. */
+function queryStats(overrides: Record<string, number | boolean> = {}) {
+  return {
+    labelsAdded: 0,
+    labelsRemoved: 0,
+    nodesCreated: 0,
+    nodesDeleted: 0,
+    propertiesSet: 0,
+    propertiesRemoved: 0,
+    relationshipsCreated: 0,
+    relationshipsDeleted: 0,
+    indicesCreated: 0,
+    indicesDeleted: 0,
+    constraintsCreated: 0,
+    constraintsDeleted: 0,
+    cachedExecution: false,
+    queryInternalExecutionTime: 0,
+    ...overrides,
+  };
+}
+
 describe("runCypher", () => {
-  test("returns the rows and parses FalkorDB's stat metadata", async () => {
+  test("returns the rows and parses FalkorDB's query statistics", async () => {
     const calls: Array<{ cypher: string; params: Record<string, unknown> }> = [];
     const graph = {
       query: async (cypher: string, opts: { params: Record<string, unknown> }) => {
         calls.push({ cypher, params: opts.params });
         return {
           data: [{ name: "checkout" }],
-          metadata: ["Nodes created: 3", "Relationships created: 1", "Cached execution: 1", "noise", 42],
+          stats: queryStats({ nodesCreated: 3, relationshipsCreated: 1, cachedExecution: true }),
         };
       },
     } as unknown as Graph;
@@ -196,18 +217,18 @@ describe("runCypher", () => {
     expect(calls).toEqual([{ cypher: "MATCH (n) RETURN n", params: { x: 1 } }]);
   });
 
-  test("parses negative and fractional stats, and ignores trailing units", async () => {
+  test("omits zero counters and keeps non-zero ones", async () => {
     const graph = fakeGraph(() => ({
       data: [],
-      metadata: ["Nodes deleted: -2", "Score: 0.5", "Duration: 12 ms"],
+      stats: queryStats({ nodesDeleted: 2, propertiesSet: 4 }),
     }));
 
     const { stats } = await runCypher(graph, "RETURN 1");
 
-    expect(stats).toEqual({ "nodes deleted": -2, score: 0.5 });
+    expect(stats).toEqual({ "nodes deleted": 2, "properties set": 4 });
   });
 
-  test("tolerates a result with no data or metadata", async () => {
+  test("tolerates a result with no data or stats", async () => {
     const graph = fakeGraph(() => ({}));
 
     const { rows, stats } = await runCypher(graph, "RETURN 1");
