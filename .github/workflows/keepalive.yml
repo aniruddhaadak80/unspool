@@ -36,5 +36,6 @@ jobs:
           case "$CODE" in
             200) echo "keep-alive ok" ;;
             503) echo "::notice::FalkorDB is not configured yet — skipping. Set FALKORDB_URL on Vercel." ;;
+            402) echo "::notice::the Vercel deployment is disabled (payment required) — skipping. Re-enable the deployment, then the keep-alive resumes." ;;
             *)   echo "::error::keep-alive failed with HTTP $CODE"; exit 1 ;;
           esac
