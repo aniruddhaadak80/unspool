@@ -15,12 +15,12 @@
     "mcp": "bun scripts/mcp-server.ts"
   },
   "dependencies": {
-    "@ai-sdk/openai": "^4.0.111",
-    "@ai-sdk/react": "^4.0.170",
+    "@ai-sdk/openai": "^4.0.118",
+    "@ai-sdk/react": "^4.0.177",
     "@modelcontextprotocol/sdk": "^1.32.2",
     "@xyflow/react": "^12.12.1",
-    "ai": "^7.0.166",
-    "falkordb": "^7.0.0",
+    "ai": "^7.0.173",
+    "falkordb": "^7.0.1",
     "next": "16.4.6",
     "react": "19.3.1",
     "react-dom": "19.3.1",
