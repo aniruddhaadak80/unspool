@@ -15,11 +15,11 @@
     "mcp": "bun scripts/mcp-server.ts"
   },
   "dependencies": {
-    "@ai-sdk/openai": "^4.0.121",
-    "@ai-sdk/react": "^4.0.180",
+    "@ai-sdk/openai": "^4.0.122",
+    "@ai-sdk/react": "^4.0.186",
     "@modelcontextprotocol/sdk": "^1.32.2",
-    "@xyflow/react": "^13.0.2",
-    "ai": "^7.0.176",
+    "@xyflow/react": "^13.0.3",
+    "ai": "^7.0.181",
     "falkordb": "^7.0.1",
     "next": "16.4.6",
     "react": "19.3.1",
@@ -28,7 +28,7 @@
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "^4",
-    "@types/bun": "^1.4.4",
+    "@types/bun": "^1.4.5",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
